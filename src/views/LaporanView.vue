@@ -34,27 +34,13 @@ const confirmAction = async () => {
   }
 };
 
-const getStatusText = (status: string) => {
+const getStatusColor = (status: string) => {
   switch (status) {
-    case 'PENDING': return 'Belum Diproses';
-    case 'APPROVED': return 'Disetujui';
-    case 'REJECTED': return 'Ditolak';
-    case 'SOLVED': return 'Selesai';
-    default: return status;
+    case 'APPROVED': return 'text-green-600 bg-green-100';
+    case 'REJECTED': return 'text-red-600 bg-red-100';
+    case 'SOLVED': return 'text-blue-600 bg-blue-100';
+    default: return 'text-yellow-600 bg-yellow-100';
   }
-};
-
-const formatDate = (dateString?: string) => {
-    if (!dateString) return '-';
-    const date = new Date(dateString);
-    // Format: 8/6/2025 12:50
-    return date.toLocaleDateString('id-ID', {
-        day: 'numeric',
-        month: 'numeric',
-        year: 'numeric',
-        hour: 'numeric',
-        minute: 'numeric',
-    });
 };
 </script>
 
@@ -74,61 +60,67 @@ const formatDate = (dateString?: string) => {
       <button @click="fetchReports" class="ml-2 underline text-red-700">Retry</button>
     </div>
 
-    <!-- Reports List (Cards) -->
-    <div v-if="reports.length" class="space-y-4">
-      <div v-for="report in reports" :key="report.id" class="bg-white rounded-xl shadow-sm overflow-hidden flex flex-col md:flex-row hover:shadow-md transition-shadow">
-        
-        <!-- Image Section -->
-        <div class="w-full md:w-1/3 lg:w-1/4 h-48 md:h-auto relative flex-shrink-0">
-          <img :src="report.photoUrl" class="w-full h-full object-cover" onerror="this.src='/placeholder.png'" alt="Report Image" />
-          <div class="absolute top-4 left-4">
-             <input type="checkbox" class="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 bg-white" />
-          </div>
-        </div>
-
-        <!-- Content Section -->
-        <div class="p-4 flex-1 flex flex-col justify-between">
-           <div>
-              <h3 class="text-blue-500 font-semibold text-sm md:text-base mb-1">
-                 {{ report.addressText || 'Lokasi tidak tersedia' }}
-              </h3>
-              <p class="text-gray-700 text-sm mb-4">
-                 {{ report.description || 'Tidak ada deskripsi' }}
-              </p>
-              <p class="text-gray-600 text-sm">
-                 Pelapor : {{ report.user?.name || 'Anonymous' }}
-              </p>
-           </div>
-
-           <div class="flex flex-col md:flex-row items-start md:items-end justify-between mt-4">
-              <div class="flex items-center space-x-2">
-                 <span class="px-4 py-1.5 bg-gray-500 text-white text-xs font-medium rounded">
-                    {{ getStatusText(report.status) }}
-                 </span>
+    <!-- Table -->
+    <div v-if="reports.length" class="bg-white rounded-lg shadow overflow-hidden border border-gray-200">
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Report Info</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Photo</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <tr v-for="report in reports" :key="report.id" class="hover:bg-gray-50">
+              <td class="px-6 py-4">
+                <div class="text-sm font-medium text-gray-900">{{ report.fishReference?.name || 'Unknown Fish' }}</div>
+                <div class="text-sm text-gray-500 mt-1 line-clamp-2">{{ report.description }}</div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-900">{{ report.user?.name || 'Anonymous' }}</div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <a :href="report.photoUrl" target="_blank" class="block w-16 h-16 rounded overflow-hidden border border-gray-200">
+                  <img :src="report.photoUrl" class="w-full h-full object-cover" onerror="this.src='/placeholder.png'" alt="Reported fish" />
+                </a>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span :class="['px-2 inline-flex text-xs leading-5 font-semibold rounded-full', getStatusColor(report.status)]">
+                  {{ report.status }}
+                </span>
+                <div v-if="report.adminNote" class="text-xs text-gray-500 mt-1 max-w-[150px] truncate" :title="report.adminNote">
+                  Note: {{ report.adminNote }}
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-y-1 sm:space-y-0 sm:space-x-1 flex flex-col sm:flex-row">
+                 <!-- Actions for PENDING -->
+                 <template v-if="report.status === 'PENDING'">
+                    <button @click="openActionModal(report, 'APPROVED')" 
+                            class="text-white bg-green-600 hover:bg-green-700 px-3 py-1 rounded-md text-xs flex items-center justify-center">
+                      <Check class="w-3 h-3 mr-1" /> Approve
+                    </button>
+                    <button @click="openActionModal(report, 'REJECTED')" 
+                            class="text-white bg-red-600 hover:bg-red-700 px-3 py-1 rounded-md text-xs flex items-center justify-center">
+                      <X class="w-3 h-3 mr-1" /> Reject
+                    </button>
+                 </template>
                  
-                 <!-- Action Buttons (Mini) -->
-                 <div class="flex space-x-1" v-if="report.status === 'PENDING'">
-                    <button @click="openActionModal(report, 'APPROVED')" class="p-1 bg-green-100 text-green-600 rounded hover:bg-green-200" title="Approve">
-                       <Check class="w-4 h-4" />
+                 <!-- Actions for APPROVED -->
+                 <template v-if="report.status === 'APPROVED'">
+                    <button @click="openActionModal(report, 'SOLVED')" 
+                            class="text-white bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded-md text-xs flex items-center justify-center">
+                      <CheckCircle class="w-3 h-3 mr-1" /> Mark Solved
                     </button>
-                    <button @click="openActionModal(report, 'REJECTED')" class="p-1 bg-red-100 text-red-600 rounded hover:bg-red-200" title="Reject">
-                       <X class="w-4 h-4" />
-                    </button>
-                 </div>
-                 <div class="flex space-x-1" v-if="report.status === 'APPROVED'">
-                    <button @click="openActionModal(report, 'SOLVED')" class="p-1 bg-blue-100 text-blue-600 rounded hover:bg-blue-200" title="Mark Solved">
-                       <CheckCircle class="w-4 h-4" />
-                    </button>
-                 </div>
-              </div>
+                 </template>
 
-              <div class="text-right mt-2 md:mt-0">
-                 <p class="text-gray-500 text-xs">Dilaporkan pada</p>
-                 <p class="text-gray-700 text-sm">{{ formatDate(report.created_at) }}</p>
-              </div>
-           </div>
-        </div>
-
+                 <!-- No actions for REJECTED or SOLVED unless we want to allow reverting? Assuming standard flow for now -->
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
     <div v-else-if="!loading" class="text-center py-10 bg-gray-50 rounded border border-gray-200">
