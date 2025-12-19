@@ -1,0 +1,16 @@
+my-project/
+├── public/              # Aset statis (favicon, robot.txt)
+├── src/
+│   ├── assets/          # CSS global, fonts, images
+│   ├── components/      # Komponen kecil yang bisa digunakan kembali
+│   │   ├── common/      # Tombol, Input, Card (Atomic components)
+│   │   └── layout/      # Navbar, Footer, Sidebar
+│   ├── composables/     # Logika bisnis (Reusable logic / Hooks)
+│   ├── layouts/         # Layout pembungkus halaman (Default, Blank)
+│   ├── views/           # Halaman utama (sesuai rute URL)
+│   ├── router/          # Konfigurasi Vue Router
+│   ├── App.vue          # Root component
+│   └── main.js          # Entry point
+├── index.html
+├── vite.config.js
+└── package.json
