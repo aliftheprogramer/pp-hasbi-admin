@@ -25,7 +25,7 @@ const handleLogin = async () => {
         <div>
           <label class="block text-gray-700 text-sm font-bold mb-2" for="email">Email</label>
           <input 
-            v-model="email"
+            v-model.trim="email"
             id="email" 
             type="email" 
             placeholder="Enter your email"

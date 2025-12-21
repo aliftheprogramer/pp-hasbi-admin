@@ -17,14 +17,17 @@ export function useAuth() {
         error.value = null;
         try {
             const response = await axios.post(LOGIN_URL, payload);
-            if (response.data && response.data.token) {
-                const newToken = response.data.token;
+
+            // Handle response structure: { success: true, data: { token: "..." } }
+            const newToken = response.data?.data?.token || response.data?.token;
+
+            if (newToken) {
                 localStorage.setItem('token', newToken);
                 token.value = newToken;
                 router.push('/dashboard');
                 return true;
             } else {
-                error.value = 'Invalid credentials';
+                error.value = 'Invalid credentials or missing token';
                 return false;
             }
         } catch (err: any) {
